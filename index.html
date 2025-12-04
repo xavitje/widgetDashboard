@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; word-break: break-word; }
+        th { background-color: #3B82F6; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        .screenshot-link { color: #10B981; text-decoration: none; font-weight: bold; }
+        .no-screenshot { color: #aaa; }
+        .error { color: red; font-weight: bold; }
+        .customer-id-display { margin-top: 10px; font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+
+    <h1>Feedback Overzicht</h1>
+    <p id="status">Laden van feedback...</p>
+    <p class="customer-id-display">Ingelogd Klant ID: <span id="current-id-display"></span></p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Klant ID</th>
+                <th>Bericht</th>
+                <th>URL</th>
+                <th>Screenshot</th>
+                <th>User Agent</th>
+            </tr>
+        </thead>
+        <tbody id="feedback-body">
+            </tbody>
+    </table>
+
+    <script>
+        // BELANGRIJK: De API-URL op poort 3000
+        const API_BASE_URL = 'http://38.242.144.86:3000/api/v1/feedback'; 
+        const feedbackBody = document.getElementById('feedback-body');
+        const statusElement = document.getElementById('status');
+        const currentIdDisplay = document.getElementById('current-id-display');
+
+        let currentCustomerId = null; // Opslag voor de gefilterde ID
+
+        // Vraag de klant om zijn ID te verifiëren bij het laden
+        function promptForId() {
+            // Dit is de 'inlog' stap voor data-isolatie.
+            currentCustomerId = prompt("Voer uw Klant ID in om de feedback te bekijken:"); 
+            
+            if (currentCustomerId && currentCustomerId.trim() !== "") {
+                currentIdDisplay.textContent = currentCustomerId;
+                fetchFeedback();
+            } else {
+                statusElement.className = 'error';
+                statusElement.textContent = 'U moet een Klant ID invoeren om de data te zien.';
+            }
+        }
+
+        async function fetchFeedback() {
+            // Gebruik de ID om de URL te filteren via query parameter
+            const API_URL = `${API_BASE_URL}?customerId=${currentCustomerId}`;
+
+            statusElement.textContent = `Laden van feedback voor Klant ID: ${currentCustomerId}...`;
+
+            try {
+                const response = await fetch(API_URL);
+                
+                if (response.status === 401) {
+                    statusElement.className = 'error';
+                    statusElement.textContent = 'Toegang geweigerd: De ingevoerde Klant ID is ongeldig of ontbreekt.';
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP-fout! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                statusElement.textContent = `Totaal ${data.length} feedback items gevonden voor Klant ID: ${currentCustomerId}.`;
+                renderTable(data);
+
+            } catch (error) {
+                statusElement.className = 'error';
+                statusElement.textContent = `Fout bij laden van feedback: ${error.message}. Controleer de API-server en CORS.`;
+                console.error("Fout bij ophalen feedback:", error);
+            }
+        }
+
+        function renderTable(feedbackData) {
+            feedbackBody.innerHTML = ''; // Maak de tabel leeg
+
+            if (feedbackData.length === 0) {
+                feedbackBody.innerHTML = '<tr><td colspan="6">Geen feedback gevonden.</td></tr>';
+                return;
+            }
+
+            feedbackData.forEach(item => {
+                const row = feedbackBody.insertRow();
+                
+                // Datum formatteren
+                const date = new Date(item.date).toLocaleString('nl-NL', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                // Screenshot link maken
+                let screenshotContent;
+                if (item.screenshotUrl && item.screenshotUrl !== 'error_saving_image') {
+                    // Gebruik de domeinnaam van de API als basis voor de afbeeldingen
+                    const imageUrlBase = API_BASE_URL.replace('/api/v1/feedback', '');
+                    screenshotContent = `<a href="${imageUrlBase}${item.screenshotUrl}" target="_blank" class="screenshot-link">Bekijk Screenshot</a>`;
+                } else if (item.screenshotUrl === 'error_saving_image') {
+                    screenshotContent = `<span class="no-screenshot">Fout bij opslaan</span>`;
+                } else {
+                    screenshotContent = `<span class="no-screenshot">Geen</span>`;
+                }
+
+                row.insertCell().textContent = date;
+                row.insertCell().textContent = item.customerId; // Toon de ID
+                row.insertCell().textContent = item.message;
+                row.insertCell().textContent = item.url;
+                row.insertCell().innerHTML = screenshotContent;
+                row.insertCell().textContent = item.userAgent.substring(0, 50) + '...'; 
+            });
+        }
+
+        // Start het inlogproces
+        promptForId();
+    </script>
+
+</body>
+</html>
