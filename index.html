@@ -1,141 +1,575 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        h1 { color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; word-break: break-word; }
-        th { background-color: #3B82F6; color: white; }
-        tr:hover { background-color: #f1f1f1; }
-        .screenshot-link { color: #10B981; text-decoration: none; font-weight: bold; }
-        .no-screenshot { color: #aaa; }
-        .error { color: red; font-weight: bold; }
-        .customer-id-display { margin-top: 10px; font-weight: bold; color: #555; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Widget Feedback Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 1200px;
+      margin: 24px;
+      background: #020617;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: radial-gradient(circle at top left, #1d4ed8 0, #020617 45%);
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 span.logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.8);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    header .status {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+      gap: 0;
+      min-height: 480px;
+    }
+
+    /* Login kolom */
+    .auth-panel {
+      border-right: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 24px;
+      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.1), transparent 50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .auth-panel h2 {
+      margin: 0 0 4px;
+      font-size: 1.15rem;
+    }
+
+    .auth-panel p {
+      margin: 0 0 16px;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #9ca3af;
+    }
+
+    input {
+      border-radius: 999px;
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 8px 12px;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.7);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .btn-primary {
+      border-radius: 999px;
+      border: none;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #0b1120;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 10px 30px rgba(22, 163, 74, 0.5);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn-secondary {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      background: transparent;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    .error-text {
+      font-size: 0.8rem;
+      color: #f97373;
+      min-height: 1em;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    /* Dashboard kolom */
+    .dashboard-panel {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 55%);
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 0.7rem;
+    }
+
+    .chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      color: #9ca3af;
+    }
+
+    .chip.positive {
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #bbf7d0;
+    }
+
+    .chip.warning {
+      border-color: rgba(234, 179, 8, 0.9);
+      color: #facc15;
+    }
+
+    .logout-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .feedback-container {
+      flex: 1;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 260px;
+    }
+
+    .feedback-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feedback-header h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .feedback-meta-info {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    #feedback-empty,
+    #feedback-error {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      min-height: 1.2em;
+    }
+
+    #feedback-error {
+      color: #f97373;
+    }
+
+    #feedback-list {
+      list-style: none;
+      margin: 8px 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      max-height: 380px;
+    }
+
+    .feedback-item {
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+
+    .feedback-meta {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .feedback-message {
+      font-size: 0.9rem;
+    }
+
+    .feedback-screenshot {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: 8px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      object-fit: cover;
+    }
+
+    /* State: ingelogd / niet ingelogd */
+    body:not(.is-logged-in) .dashboard-panel {
+      opacity: 0.25;
+      pointer-events: none;
+      filter: blur(1px);
+    }
+
+    body.is-logged-in .auth-panel {
+      opacity: 0.25;
+      pointer-events: none;
+      filter: blur(1px);
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+      .auth-panel {
+        border-right: none;
+        border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>
+          <span class="logo">W</span>
+          Widget Feedback Dashboard
+        </h1>
+        <div class="status">Bekijk feedback per website (customerId is beveiligd in de backend)</div>
+      </div>
+      <div class="chips">
+        <div class="chip positive">Multi-tenant</div>
+        <div class="chip">JWT beveiliging</div>
+        <div class="chip warning">Geen customerId in URL</div>
+      </div>
+    </header>
 
-    <h1>Feedback Overzicht</h1>
-    <p id="status">Laden van feedback...</p>
-    <p class="customer-id-display">Ingelogd Klant ID: <span id="current-id-display"></span></p>
+    <main>
+      <!-- LOGIN PANEL -->
+      <section class="auth-panel">
+        <div>
+          <h2>Log in</h2>
+          <p>Gebruik je dashboard account om de feedback van jouw website te zien.</p>
+        </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Datum</th>
-                <th>Klant ID</th>
-                <th>Bericht</th>
-                <th>URL</th>
-                <th>Screenshot</th>
-                <th>User Agent</th>
-            </tr>
-        </thead>
-        <tbody id="feedback-body">
-            </tbody>
-    </table>
+        <form id="login-form">
+          <div>
+            <label for="login-email">E‑mail</label>
+            <input id="login-email" type="email" autocomplete="username" required />
+          </div>
+          <div>
+            <label for="login-password">Wachtwoord</label>
+            <input id="login-password" type="password" autocomplete="current-password" required />
+          </div>
+          <button type="submit" class="btn-primary">
+            Inloggen
+          </button>
+          <div id="login-error" class="error-text"></div>
+          <div class="hint">
+            Je customerId wordt niet hier ingevuld, maar komt uit je account in de backend.
+          </div>
+        </form>
+      </section>
 
-    <script>
-        // BELANGRIJK: De API-URL op poort 3000
-        const API_BASE_URL = 'http://38.242.144.86:3000/api/v1/feedback'; 
-        const feedbackBody = document.getElementById('feedback-body');
-        const statusElement = document.getElementById('status');
-        const currentIdDisplay = document.getElementById('current-id-display');
+      <!-- DASHBOARD PANEL -->
+      <section class="dashboard-panel">
+        <div class="top-row">
+          <div>
+            <h2 style="margin:0;font-size:1.05rem;">Feedback</h2>
+            <div class="feedback-meta-info">
+              Alle items gefilterd op jouw customerId (uit JWT‑token).
+            </div>
+          </div>
+          <div class="logout-wrap">
+            <button id="refresh-btn" type="button" class="btn-secondary">
+              Vernieuwen
+            </button>
+            <button id="logout-btn" type="button" class="btn-secondary">
+              Log uit
+            </button>
+          </div>
+        </div>
 
-        let currentCustomerId = null; // Opslag voor de gefilterde ID
+        <div class="feedback-container">
+          <div class="feedback-header">
+            <div></div>
+            <div>
+              <span id="feedback-empty"></span>
+              <span id="feedback-error"></span>
+            </div>
+          </div>
 
-        // Vraag de klant om zijn ID te verifiëren bij het laden
-        function promptForId() {
-            // Dit is de 'inlog' stap voor data-isolatie.
-            currentCustomerId = prompt("Voer uw Klant ID in om de feedback te bekijken:"); 
-            
-            if (currentCustomerId && currentCustomerId.trim() !== "") {
-                currentIdDisplay.textContent = currentCustomerId;
-                fetchFeedback();
-            } else {
-                statusElement.className = 'error';
-                statusElement.textContent = 'U moet een Klant ID invoeren om de data te zien.';
-            }
+          <ul id="feedback-list"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- API + LOGICA (zoals eerder uitgelegd) -->
+  <script>
+    const API_BASE = 'http://38.242.144.86:3000/api/v1';
+
+    function saveToken(token) {
+      localStorage.setItem('widgetToken', token);
+    }
+
+    function getToken() {
+      return localStorage.getItem('widgetToken');
+    }
+
+    function clearToken() {
+      localStorage.removeItem('widgetToken');
+    }
+
+    function getAuthHeaders() {
+      const token = getToken();
+      if (!token) return {};
+      return { Authorization: 'Bearer ' + token };
+    }
+
+    async function apiLogin(email, password) {
+      const res = await fetch(API_BASE + '/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) {
+        let msg = 'Login mislukt';
+        try {
+          const data = await res.json();
+          if (data.msg) msg = data.msg;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+
+      const data = await res.json();
+      saveToken(data.token);
+      return data;
+    }
+
+    async function apiLogout() {
+      clearToken();
+    }
+
+    async function apiFetchFeedback() {
+      const res = await fetch(API_BASE + '/feedback', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        }
+      });
+
+      if (res.status === 401) {
+        clearToken();
+        throw new Error('Niet ingelogd of sessie verlopen.');
+      }
+
+      if (!res.ok) {
+        let msg = 'Kon feedback niet ophalen';
+        try {
+          const data = await res.json();
+          if (data.msg) msg = data.msg;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+
+      return res.json();
+    }
+
+    async function loadFeedbackAndRender() {
+      const listEl = document.getElementById('feedback-list');
+      const emptyEl = document.getElementById('feedback-empty');
+      const errorEl = document.getElementById('feedback-error');
+
+      if (!listEl) return;
+
+      listEl.innerHTML = '';
+      if (emptyEl) emptyEl.textContent = '';
+      if (errorEl) errorEl.textContent = '';
+
+      try {
+        const feedbackItems = await apiFetchFeedback();
+
+        if (!feedbackItems.length) {
+          if (emptyEl) emptyEl.textContent = 'Nog geen feedback voor jouw website.';
+          return;
         }
 
-        async function fetchFeedback() {
-            // Gebruik de ID om de URL te filteren via query parameter
-            const API_URL = `${API_BASE_URL}?customerId=${currentCustomerId}`;
+        feedbackItems.forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'feedback-item';
 
-            statusElement.textContent = `Laden van feedback voor Klant ID: ${currentCustomerId}...`;
+          const meta = document.createElement('div');
+          meta.className = 'feedback-meta';
+          const date = item.date ? new Date(item.date).toLocaleString() : '';
+          meta.textContent = `${date} – ${item.url || ''}`;
 
-            try {
-                const response = await fetch(API_URL);
-                
-                if (response.status === 401) {
-                    statusElement.className = 'error';
-                    statusElement.textContent = 'Toegang geweigerd: De ingevoerde Klant ID is ongeldig of ontbreekt.';
-                    return;
-                }
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP-fout! Status: ${response.status}`);
-                }
+          const msg = document.createElement('div');
+          msg.className = 'feedback-message';
+          msg.textContent = item.message || '';
 
-                const data = await response.json();
-                
-                statusElement.textContent = `Totaal ${data.length} feedback items gevonden voor Klant ID: ${currentCustomerId}.`;
-                renderTable(data);
+          li.appendChild(meta);
+          li.appendChild(msg);
 
-            } catch (error) {
-                statusElement.className = 'error';
-                statusElement.textContent = `Fout bij laden van feedback: ${error.message}. Controleer de API-server en CORS.`;
-                console.error("Fout bij ophalen feedback:", error);
-            }
+          if (item.screenshotUrl) {
+            const img = document.createElement('img');
+            img.src = item.screenshotUrl;
+            img.alt = 'Screenshot bij feedback';
+            img.className = 'feedback-screenshot';
+            li.appendChild(img);
+          }
+
+          listEl.appendChild(li);
+        });
+      } catch (err) {
+        if (errorEl) errorEl.textContent = err.message;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginForm = document.getElementById('login-form');
+      const emailInput = document.getElementById('login-email');
+      const passwordInput = document.getElementById('login-password');
+      const loginError = document.getElementById('login-error');
+      const logoutBtn = document.getElementById('logout-btn');
+      const refreshBtn = document.getElementById('refresh-btn');
+
+      async function handleLogin(e) {
+        e.preventDefault();
+        loginError.textContent = '';
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!email || !password) {
+          loginError.textContent = 'Vul email en wachtwoord in.';
+          return;
         }
 
-        function renderTable(feedbackData) {
-            feedbackBody.innerHTML = ''; // Maak de tabel leeg
-
-            if (feedbackData.length === 0) {
-                feedbackBody.innerHTML = '<tr><td colspan="6">Geen feedback gevonden.</td></tr>';
-                return;
-            }
-
-            feedbackData.forEach(item => {
-                const row = feedbackBody.insertRow();
-                
-                // Datum formatteren
-                const date = new Date(item.date).toLocaleString('nl-NL', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                // Screenshot link maken
-                let screenshotContent;
-                if (item.screenshotUrl && item.screenshotUrl !== 'error_saving_image') {
-                    // Gebruik de domeinnaam van de API als basis voor de afbeeldingen
-                    const imageUrlBase = API_BASE_URL.replace('/api/v1/feedback', '');
-                    screenshotContent = `<a href="${imageUrlBase}${item.screenshotUrl}" target="_blank" class="screenshot-link">Bekijk Screenshot</a>`;
-                } else if (item.screenshotUrl === 'error_saving_image') {
-                    screenshotContent = `<span class="no-screenshot">Fout bij opslaan</span>`;
-                } else {
-                    screenshotContent = `<span class="no-screenshot">Geen</span>`;
-                }
-
-                row.insertCell().textContent = date;
-                row.insertCell().textContent = item.customerId; // Toon de ID
-                row.insertCell().textContent = item.message;
-                row.insertCell().textContent = item.url;
-                row.insertCell().innerHTML = screenshotContent;
-                row.insertCell().textContent = item.userAgent.substring(0, 50) + '...'; 
-            });
+        try {
+          await apiLogin(email, password);
+          loginForm.reset();
+          document.body.classList.add('is-logged-in');
+          await loadFeedbackAndRender();
+        } catch (err) {
+          loginError.textContent = err.message;
         }
+      }
 
-        // Start het inlogproces
-        promptForId();
-    </script>
+      async function handleLogout() {
+        await apiLogout();
+        document.body.classList.remove('is-logged-in');
+        const list = document.getElementById('feedback-list');
+        if (list) list.innerHTML = '';
+      }
 
+      if (loginForm) loginForm.addEventListener('submit', handleLogin);
+      if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+      if (refreshBtn) refreshBtn.addEventListener('click', () => {
+        if (getToken()) loadFeedbackAndRender();
+      });
+
+      // Als er al een token is bij load, direct proberen
+      if (getToken()) {
+        document.body.classList.add('is-logged-in');
+        loadFeedbackAndRender().catch(() => {
+          handleLogout();
+        });
+      }
+    });
+  </script>
 </body>
 </html>
