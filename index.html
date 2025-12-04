@@ -292,6 +292,56 @@
       border-radius: 8px;
       border: 1px solid rgba(31, 41, 55, 0.9);
       object-fit: cover;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feedback-screenshot:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Image Modal/Lightbox */
+    .image-modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .image-modal.active {
+      display: flex;
+    }
+
+    .image-modal-content {
+      max-width: 95%;
+      max-height: 95%;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .image-modal-close {
+      position: absolute;
+      top: 20px;
+      right: 35px;
+      color: #f1f1f1;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .image-modal-close:hover {
+      color: #bbb;
     }
 
     /* State: ingelogd / niet ingelogd */
@@ -345,7 +395,7 @@
 
         <form id="login-form">
           <div>
-            <label for="login-email">E‑mail</label>
+            <label for="login-email">E-mail</label>
             <input id="login-email" type="email" autocomplete="username" required />
           </div>
           <div>
@@ -368,7 +418,7 @@
           <div>
             <h2 style="margin:0;font-size:1.05rem;">Feedback</h2>
             <div class="feedback-meta-info">
-              Alle items gefilterd op jouw customerId (uit JWT‑token).
+              Alle items gefilterd op jouw customerId (uit JWT-token).
             </div>
           </div>
           <div class="logout-wrap">
@@ -396,7 +446,13 @@
     </main>
   </div>
 
-  <!-- API + LOGICA (zoals eerder uitgelegd) -->
+  <!-- Image Modal -->
+  <div id="image-modal" class="image-modal">
+    <span class="image-modal-close">&times;</span>
+    <img id="modal-image" class="image-modal-content" alt="Volledige screenshot">
+  </div>
+
+  <!-- API + LOGICA -->
   <script>
     const API_BASE = 'http://38.242.144.86:3000/api/v1';
 
@@ -469,6 +525,18 @@
       return res.json();
     }
 
+    function openImageModal(imageSrc) {
+      const modal = document.getElementById('image-modal');
+      const modalImg = document.getElementById('modal-image');
+      modal.classList.add('active');
+      modalImg.src = imageSrc;
+    }
+
+    function closeImageModal() {
+      const modal = document.getElementById('image-modal');
+      modal.classList.remove('active');
+    }
+
     async function loadFeedbackAndRender() {
       const listEl = document.getElementById('feedback-list');
       const emptyEl = document.getElementById('feedback-empty');
@@ -495,7 +563,7 @@
           const meta = document.createElement('div');
           meta.className = 'feedback-meta';
           const date = item.date ? new Date(item.date).toLocaleString() : '';
-          meta.textContent = `${date} – ${item.url || ''}`;
+          meta.textContent = `${date} — ${item.url || ''}`;
 
           const msg = document.createElement('div');
           msg.className = 'feedback-message';
@@ -509,6 +577,8 @@
             img.src = item.screenshotUrl;
             img.alt = 'Screenshot bij feedback';
             img.className = 'feedback-screenshot';
+            img.title = 'Klik om te vergroten';
+            img.addEventListener('click', () => openImageModal(item.screenshotUrl));
             li.appendChild(img);
           }
 
@@ -526,6 +596,8 @@
       const loginError = document.getElementById('login-error');
       const logoutBtn = document.getElementById('logout-btn');
       const refreshBtn = document.getElementById('refresh-btn');
+      const imageModal = document.getElementById('image-modal');
+      const closeModalBtn = document.querySelector('.image-modal-close');
 
       async function handleLogin(e) {
         e.preventDefault();
@@ -560,6 +632,26 @@
       if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
       if (refreshBtn) refreshBtn.addEventListener('click', () => {
         if (getToken()) loadFeedbackAndRender();
+      });
+
+      // Modal sluiten
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeImageModal);
+      }
+
+      if (imageModal) {
+        imageModal.addEventListener('click', (e) => {
+          if (e.target === imageModal) {
+            closeImageModal();
+          }
+        });
+      }
+
+      // ESC key om modal te sluiten
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && imageModal.classList.contains('active')) {
+          closeImageModal();
+        }
       });
 
       // Als er al een token is bij load, direct proberen
